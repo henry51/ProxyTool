@@ -40,7 +40,7 @@ class Proxy(object):
         response = self.session.get(self.hostUrl,headers = self.headers)
         return self.session.cookies.get_dict()
 
-    def _parse_proxy(self):
+    def _parse_proxy(self, country_code, level_type, search_type):
         peuland_id = self._get_cookies()['peuland_id']
         m = hashlib.md5()
         m.update(str.encode(peuland_id))
@@ -48,11 +48,11 @@ class Proxy(object):
         for i in range(1,self.max_page +1):
             payload = {
                 'type': '',
-                'country_code': 'CN',
+                'country_code': country_code,
                 'is_clusters': '',
                 'is_https': '',
-                'level_type': 'anonymous',
-                'search_type': 'all',
+                'level_type': level_type,
+                'search_type': search_type,
                 'page': str(i),
             }
             try:
@@ -81,7 +81,7 @@ class Proxy(object):
             return 0
 
     def get_proxy(self):
-        for proxy in self._parse_proxy():
+        for proxy in self._parse_proxy('CN','anonymous', 'all'):
             if self._check_proxy(proxy) == 200:
                 self.proxies.append(proxy)
         return self.proxies
