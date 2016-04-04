@@ -13,6 +13,7 @@ import requests
 import hashlib
 import random
 import time
+import concurrent.futures
 
 class Proxy(object):
     def __init__(self, max_page=1):
@@ -73,18 +74,25 @@ class Proxy(object):
                 print (e)
             
 
-    def _check_proxy(self, proxy):
+    def _check_proxy(self, proxy, timeout = None):
         try:
-            r = requests.get(self.checkUrl, proxies =  proxy)
+            r = requests.get(self.checkUrl, proxies =  proxy ,timeout = timeout)
             return r.status_code
         except:
             return 0
 
     def get_proxy(self):
-        for proxy in self._parse_proxy('CN','anonymous', 'all'):
-            if self._check_proxy(proxy) == 200:
-                self.proxies.append(proxy)
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 5) as executor:
+            future_to_proxy = {executor.submit(_check_proxy,p,20): p for p in self._parse_proxy('CN','anonymous', 'all')}
+            for future in concurrent.futures.as_completed(future_to_proxy):
+                proxy = future_to_proxy[future]
+                try:
+                    if future.result() === 200:
+                        self.proxies.append(proxy)
+                except Exception as exc:
+                    print (exc)
         return self.proxies
+
 
 
 
